@@ -44,7 +44,7 @@ function App() {
 
   return (
     <div className="relative flex h-screen flex-col items-center justify-center gap-4">
-      {alertState?.int === 1 && (
+      {alertState?.alertstate === 1 && (
         <div
           className="absolute top-10 flex h-64 w-1/2 items-center justify-center"
           style={{
