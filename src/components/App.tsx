@@ -3,12 +3,16 @@ import { updateAlert } from 'services/alert'
 import { AlertEntity } from 'common/alert'
 import { useAlertListener } from 'hooks/useAlertListener'
 import { Power } from 'lucide-react'
+import { ToastContainer, toast } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
 
 function App() {
   const [alertState, setAlertState] = useState<AlertEntity | null>()
   const [timer, setTimer] = useState(0)
   const [distance, setDistance] = useState(0)
   const [blink, setBlink] = useState(false)
+
+  const isSystemActive = alertState?.int === 1 && alertState?.alertstate === 1
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -38,16 +42,25 @@ function App() {
     }
   }, [alertState?.alertstate])
 
+  useEffect(() => {
+    if (alertState?.distance) {
+      setDistance(alertState.distance)
+    }
+  }, [alertState?.distance])
+
   const handleClick = async () => {
     if (!alertState) {
       console.error('Alert not found')
       return
     }
     await updateAlert('test', { int: alertState.int ? 0 : 1 })
+    const message = alertState.int ? 'Sistema desativado' : 'Sistema ativado'
+    toast(message, { type: 'info' })
   }
 
   const handleChangeDistance = async (distance: number) => {
     await updateAlert('test', { distance })
+    toast('Distância alterada com sucesso!', { type: 'success' })
   }
 
   useAlertListener('test', (alertData) => {
@@ -66,46 +79,83 @@ function App() {
     )
 
   return (
-    <div className="relative flex h-screen flex-col items-center justify-center gap-4">
-      {alertState?.alertstate === 1 && (
-        <div
-          className="absolute top-10 flex h-64 w-1/2 items-center justify-center"
-          style={{
-            backgroundColor: blink ? 'red' : 'black',
-            color: blink ? 'black' : 'white'
-          }}
-        >
-          <h1 className="text-3xl font-bold">MENINO(A) CAIU</h1>
+    <div>
+      <ToastContainer />
+      <div className="relative grid h-screen grid-cols-11 gap-4">
+        <div className="col-span-3 flex flex-col gap-4 bg-slate-300 px-6 py-4 shadow-xl">
+          <div>
+            <h1 className="text-3xl font-bold">
+              Sistema de segurança <br /> de piscina
+            </h1>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <p className="text-lg">
+              O sistema está{' '}
+              <span className="text-xl font-bold">
+                {alertState?.int === 1 ? 'ativado' : 'desativado'}
+              </span>
+            </p>
+            <div
+              className="size-7 rounded-full shadow-green-500"
+              style={{
+                backgroundColor: alertState?.int === 1 ? 'green' : 'red'
+              }}
+            ></div>
+          </div>
+
+          <button
+            onClick={handleClick}
+            className="my-14 flex size-40 items-center justify-center self-center rounded-full border border-zinc-700 bg-[#ECEBDE] p-2 shadow-custom-inset transition-all hover:bg-[#ECEBDE]/70 active:bg-[#C1BAA1]/70"
+          >
+            <Power size={28} />
+          </button>
+
+          <div className="flex flex-col gap-1">
+            <label className="font-medium">Distância do sensor</label>
+            <div className="flex items-center gap-1">
+              <input
+                type="number"
+                value={distance}
+                onChange={(e) => setDistance(Number(e.target.value))}
+                className="w-36 rounded border border-black bg-gray-200 px-3 py-1"
+              />
+              <p>cm</p>
+              <button
+                onClick={() => handleChangeDistance(distance)}
+                className="ml-4 flex items-center justify-center self-center rounded-xl border border-zinc-700 bg-[#ECEBDE] p-2 shadow-custom-inset transition-all hover:bg-[#ECEBDE]/70 active:bg-[#C1BAA1]/70"
+              >
+                Alterar
+              </button>
+            </div>
+          </div>
         </div>
-      )}
 
-      <p>O MENINO(A) caiu faz {timer} segundos</p>
+        <div className="col-span-7 flex items-center justify-center">
+          {isSystemActive && (
+            <div className="flex flex-col items-center gap-6">
+              <div
+                className="flex h-64 w-[500px] items-center justify-center rounded"
+                style={{
+                  backgroundColor: blink ? 'red' : 'black',
+                  color: blink ? 'black' : 'white'
+                }}
+              >
+                <h1 className="text-3xl font-bold">MENINO(A) CAIU</h1>
+              </div>
 
-      <div className="flex flex-col items-center gap-4">
-        <div
-          className="size-10 rounded-full shadow-yellow-500/50"
-          style={{
-            backgroundColor: alertState?.int === 1 ? 'green' : 'red'
-          }}
-        ></div>
-        <p>{alertState?.int === 1 ? 'Ativado' : 'Desativado'}</p>
-      </div>
-      <button
-        onClick={handleClick}
-        className="flex w-20 items-center justify-center rounded border border-black bg-gray-200 p-2"
-      >
-        <Power />
-      </button>
+              <p className="text-xl font-semibold">
+                O MENINO(A) caiu faz {timer} segundos
+              </p>
+            </div>
+          )}
 
-      <div className="flex items-center gap-4">
-        <p>{alertState.distance} cm</p>
-        <input
-          type="number"
-          value={distance}
-          onChange={(e) => setDistance(Number(e.target.value))}
-          className="rounded border border-black bg-gray-200 p-1"
-        />
-        <button onClick={() => handleChangeDistance(distance)}>Alterar</button>
+          {!isSystemActive && (
+            <div className="flex flex-col items-center gap-6">
+              <p className="text-xl">Tudo tranquilo...</p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )
